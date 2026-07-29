@@ -1,16 +1,24 @@
 #include "WeightSensor.h"
-
 #include <HX711_ADC.h>
 
-HX711_ADC LoadCell(19,18);
+const int HX711_dout = 19;
+const int HX711_sck  = 18;
 
-float calibrationFactor = 696.0;
+HX711_ADC LoadCell(HX711_dout, HX711_sck);
+
+// Ganti nanti setelah proses kalibrasi
+float calibrationFactor = 1.0;
 
 void initWeightSensor()
 {
     LoadCell.begin();
 
     LoadCell.start(2000);
+
+    if (LoadCell.getTareTimeoutFlag()) {
+        Serial.println("HX711 gagal melakukan tare!");
+        while (1);
+    }
 
     LoadCell.setCalFactor(calibrationFactor);
 
@@ -19,7 +27,16 @@ void initWeightSensor()
 
 float readWeight()
 {
-    LoadCell.update();
+    static bool newDataReady = false;
 
-    return LoadCell.getData();
+    if (LoadCell.update()) {
+        newDataReady = true;
+    }
+
+    if (newDataReady) {
+        newDataReady = false;
+        return LoadCell.getData();
+    }
+
+    return NAN;   // belum ada data baru
 }
