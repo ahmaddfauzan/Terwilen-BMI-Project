@@ -1,18 +1,36 @@
-#include <Arduino.h>
+#include <Wire.h>
+#include <Adafruit_VL53L0X.h>
 
-// put function declarations here:
-int myFunction(int, int);
+Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  Serial.begin(115200);
+
+  Wire.begin(21,22);
+
+  Serial.println("VL53L0X Test");
+
+  if (!lox.begin()) {
+    Serial.println("Sensor tidak ditemukan!");
+    while (1);
+  }
+
+  Serial.println("Sensor siap.");
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-}
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+  VL53L0X_RangingMeasurementData_t measure;
+
+  lox.rangingTest(&measure, false);
+
+  if (measure.RangeStatus != 4) {
+    Serial.print("Jarak : ");
+    Serial.print(measure.RangeMilliMeter);
+    Serial.println(" mm");
+  } else {
+    Serial.println("Out of range");
+  }
+
+  delay(200);
 }
