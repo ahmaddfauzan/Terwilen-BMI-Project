@@ -3,12 +3,14 @@
 
 Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 
+const int sensorHeight = 2000; // tinggi sensor dari lantai (mm)
+
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
 
   Wire.begin(21,22);
 
-  Serial.println("VL53L0X Test");
+  Serial.println("VL53L0X Height Measurement");
 
   if (!lox.begin()) {
     Serial.println("Sensor tidak ditemukan!");
@@ -25,9 +27,25 @@ void loop() {
   lox.rangingTest(&measure, false);
 
   if (measure.RangeStatus != 4) {
-    Serial.print("Jarak : ");
-    Serial.print(measure.RangeMilliMeter);
+
+    int jarak = measure.RangeMilliMeter;
+
+    int tinggi = sensorHeight - jarak;
+
+    // Hindari nilai negatif
+    if (tinggi < 0)
+      tinggi = 0;
+
+    Serial.print("Jarak Sensor : ");
+    Serial.print(jarak);
     Serial.println(" mm");
+
+    Serial.print("Tinggi Badan : ");
+    Serial.print(tinggi / 10.0);   // cm
+    Serial.println(" cm");
+
+    Serial.println("---------------------");
+
   } else {
     Serial.println("Out of range");
   }
