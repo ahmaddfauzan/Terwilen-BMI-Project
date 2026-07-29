@@ -1,54 +1,32 @@
-#include <Wire.h>
-#include <Adafruit_VL53L0X.h>
+#include <Arduino.h>
 
-Adafruit_VL53L0X lox = Adafruit_VL53L0X();
+#include "HeightSensor.h"
+#include "WeightSensor.h"
 
-const int sensorHeight = 2000; // tinggi sensor dari lantai (mm)
+void setup()
+{
+    Serial.begin(115200);
 
-void setup() {
-  Serial.begin(9600);
+    initHeightSensor();
 
-  Wire.begin(21,22);
-
-  Serial.println("VL53L0X Height Measurement");
-
-  if (!lox.begin()) {
-    Serial.println("Sensor tidak ditemukan!");
-    while (1);
-  }
-
-  Serial.println("Sensor siap.");
+    initWeightSensor();
 }
 
-void loop() {
+void loop()
+{
+    float tinggi = readHeightCM();
 
-  VL53L0X_RangingMeasurementData_t measure;
+    float berat = readWeight();
 
-  lox.rangingTest(&measure, false);
-
-  if (measure.RangeStatus != 4) {
-
-    int jarak = measure.RangeMilliMeter;
-
-    int tinggi = sensorHeight - jarak;
-
-    // Hindari nilai negatif
-    if (tinggi < 0)
-      tinggi = 0;
-
-    Serial.print("Jarak Sensor : ");
-    Serial.print(jarak);
-    Serial.println(" mm");
-
-    Serial.print("Tinggi Badan : ");
-    Serial.print(tinggi / 10.0);   // cm
+    Serial.print("TB : ");
+    Serial.print(tinggi);
     Serial.println(" cm");
 
-    Serial.println("---------------------");
+    Serial.print("BB : ");
+    Serial.print(berat);
+    Serial.println(" kg");
 
-  } else {
-    Serial.println("Out of range");
-  }
+    Serial.println("-------------------");
 
-  delay(200);
+    delay(500);
 }
