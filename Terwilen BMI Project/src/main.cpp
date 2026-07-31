@@ -2,10 +2,13 @@
 
 #include "HeightSensor.h"
 #include "WeightSensor.h"
+#include "LCD.h"
 
 void setup()
 {
-    Serial.begin(9600);
+    Serial.begin(115200);
+
+    initLCD();
 
     initHeightSensor();
 
@@ -15,8 +18,9 @@ void setup()
 void loop()
 {
     float tinggi = readHeightCM();
-
     float berat = readWeight();
+
+    showMeasurement(tinggi, berat);
 
     Serial.print("TB : ");
     Serial.print(tinggi);
