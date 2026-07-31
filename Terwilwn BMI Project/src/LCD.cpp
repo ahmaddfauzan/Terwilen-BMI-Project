@@ -14,6 +14,7 @@ void initLCD()
 
     lcd.clear();
     lcd.setCursor(0, 0);
+    lcd.print("BMI PROJECT");
 
     lcd.setCursor(0, 1);
     lcd.print("Initializing");
