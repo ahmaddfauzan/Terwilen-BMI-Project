@@ -1,42 +1,34 @@
 #include "WeightSensor.h"
-#include <HX711_ADC.h>
+#include <HX711.h>
 
-const int HX711_dout = 19;
-const int HX711_sck  = 18;
+#define DOUT 19
+#define CLK 18
 
-HX711_ADC LoadCell(HX711_dout, HX711_sck);
+HX711 scale;
 
-// Ganti nanti setelah proses kalibrasi
-float calibrationFactor = 1.0;
+// Ganti setelah kalibrasi
+const long OFFSET = 0;
+const float SCALE = -1000.0;
 
 void initWeightSensor()
 {
-    LoadCell.begin();
+    scale.begin(DOUT, CLK);
 
-    LoadCell.start(2000);
+    Serial.println("Tare...");
 
-    if (LoadCell.getTareTimeoutFlag()) {
-        Serial.println("HX711 gagal melakukan tare!");
-        while (1);
-    }
+    scale.tare();
 
-    LoadCell.setCalFactor(calibrationFactor);
+    scale.set_scale(SCALE);
 
-    Serial.println("HX711 siap");
+    Serial.println("HX711 Siap");
 }
 
 float readWeight()
 {
-    static bool newDataReady = false;
+    float berat = scale.get_units(3); // rata-rata 3 pembacaan
 
-    if (LoadCell.update()) {
-        newDataReady = true;
-    }
+    if (abs(berat) < 0.02)
+        berat = 0;
 
-    if (newDataReady) {
-        newDataReady = false;
-        return LoadCell.getData();
-    }
-
-    return NAN;   // belum ada data baru
+    return berat;
 }
