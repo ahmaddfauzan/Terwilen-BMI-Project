@@ -1,11 +1,10 @@
 #include <Arduino.h>
 
-#include <Arduino.h>
-
 #include "HeightSensor.h"
 #include "WeightSensor.h"
 #include "LCD.h"
 #include "WiFiAP.h"
+#include "ApiServer.h"
 
 void setup()
 {
@@ -22,6 +21,9 @@ void setup()
 
     // Membuat hotspot ESP32
     initWiFiAP();
+
+    // Menjalankan HTTP API Server
+    initApiServer();
 }
 
 void loop()
@@ -42,6 +44,9 @@ void loop()
     Serial.println(" kg");
 
     Serial.println("-------------------");
+
+    // Update data API dan menangani request dari Android
+    updateApiServer(tinggi, berat);
 
     delay(500);
 }
