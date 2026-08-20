@@ -6,29 +6,50 @@
 
 HX711 scale;
 
-// Ganti setelah kalibrasi
-const long OFFSET = 0;
-const float SCALE = -1000.0;
+// Hasil kalibrasi berdasarkan beban 58 kg
+const float SCALE_FACTOR = -21241.4;
+
+// Filter
+const int SAMPLE_COUNT = 10;
 
 void initWeightSensor()
 {
     scale.begin(DOUT, CLK);
 
-    Serial.println("Tare...");
+    Serial.println("================================");
+    Serial.println("       LOAD CELL SIAP");
+    Serial.println("================================");
+
+    Serial.println("Pastikan load cell TANPA BEBAN.");
+    Serial.println("Tare dalam 5 detik...");
+
+    delay(5000);
 
     scale.tare();
 
-    scale.set_scale(SCALE);
+    scale.set_scale(SCALE_FACTOR);
 
-    Serial.println("HX711 Siap");
+    Serial.println("Tare selesai.");
+    Serial.println("HX711 siap.");
+    Serial.println();
 }
 
 float readWeight()
 {
-    float berat = scale.get_units(3); // rata-rata 3 pembacaan
+    // Ambil rata-rata 10 pembacaan
+    float berat = scale.get_units(SAMPLE_COUNT);
 
-    if (abs(berat) < 0.02)
+    // Hilangkan nilai kecil akibat noise
+    if (abs(berat) < 0.5)
+    {
         berat = 0;
+    }
+
+    // Batas bawah
+    if (berat < 0)
+    {
+        berat = 0;
+    }
 
     return berat;
 }
