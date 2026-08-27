@@ -2,54 +2,54 @@
 #include <HX711.h>
 
 #define DOUT 19
-#define CLK 18
+#define CLK  18
 
 HX711 scale;
 
-// Hasil kalibrasi berdasarkan beban 58 kg
-const float SCALE_FACTOR = -21241.4;
+const float ZERO_RAW = 41026.0;
+const float SCALE_FACTOR = 20327.36;
 
-// Filter
-const int SAMPLE_COUNT = 10;
-
-void initWeightSensor()
+long readAverageRaw(uint8_t samples)
 {
-    scale.begin(DOUT, CLK);
+    long sum = 0;
 
-    Serial.println("================================");
-    Serial.println("       LOAD CELL SIAP");
-    Serial.println("================================");
+    for (uint8_t i = 0; i < samples; i++)
+    {
+        sum += scale.read();
+        delay(50);
+    }
 
-    Serial.println("Pastikan load cell TANPA BEBAN.");
-    Serial.println("Tare dalam 5 detik...");
-
-    delay(5000);
-
-    scale.tare();
-
-    scale.set_scale(SCALE_FACTOR);
-
-    Serial.println("Tare selesai.");
-    Serial.println("HX711 siap.");
-    Serial.println();
+    return sum / samples;
 }
 
-float readWeight()
+void setup()
 {
-    // Ambil rata-rata 10 pembacaan
-    float berat = scale.get_units(SAMPLE_COUNT);
+    Serial.begin(115200);
+    delay(2000);
 
-    // Hilangkan nilai kecil akibat noise
-    if (abs(berat) < 0.5)
-    {
-        berat = 0;
-    }
+    scale.begin(DOUT, CLK);
 
-    // Batas bawah
-    if (berat < 0)
-    {
-        berat = 0;
-    }
+    Serial.println("Timbangan siap.");
+}
 
-    return berat;
+void loop()
+{
+    long raw = readAverageRaw(10);
+
+    float weight = (raw - ZERO_RAW) / SCALE_FACTOR;
+
+    // Jangan tampilkan nilai negatif kecil akibat noise
+    if (weight < 0.0)
+        weight = 0.0;
+
+    Serial.print("RAW    : ");
+    Serial.println(raw);
+
+    Serial.print("WEIGHT : ");
+    Serial.print(weight, 2);
+    Serial.println(" kg");
+
+    Serial.println("----------------");
+
+    delay(500);
 }
