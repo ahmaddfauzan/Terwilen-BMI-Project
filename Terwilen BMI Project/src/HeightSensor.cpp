@@ -5,7 +5,7 @@
 
 Adafruit_VL53L0X lox;
 
-const int sensorHeight = 2000; // mm
+const int sensorHeight = 2030; // mm
 
 void initHeightSensor()
 {
@@ -41,7 +41,7 @@ float readHeightCM()
     }
 
     if(count==0)
-        return -1;
+        return 0;
 
     float jarak = total/(float)count;
 

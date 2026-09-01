@@ -7,7 +7,7 @@
 HX711 scale;
 
 // Hasil kalibrasi berdasarkan beban 58 kg
-const float SCALE_FACTOR = -21241.4;
+const float SCALE_FACTOR = -20261.0;
 
 // Filter
 const int SAMPLE_COUNT = 10;
