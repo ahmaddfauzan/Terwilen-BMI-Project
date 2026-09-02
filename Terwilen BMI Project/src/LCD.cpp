@@ -44,21 +44,50 @@ void initLCD()
 }
 
 
-void showMeasurement(float tinggi, float berat)
+void showMeasurement(
+    float tinggi,
+    float berat,
+    bool isHold
+)
 {
-    lcd.clear();
+    // ==============================
+    // BARIS PERTAMA
+    // ==============================
 
     lcd.setCursor(0, 0);
+
     lcd.print("TB:");
+
     lcd.print(tinggi, 1);
-    lcd.print(" cm");
+
+    lcd.print("cm   ");
+
+
+    // Indikator HOLD
+    lcd.setCursor(15, 0);
+
+    if (isHold)
+    {
+        lcd.print("H");
+    }
+    else
+    {
+        lcd.print(" ");
+    }
+
+
+    // ==============================
+    // BARIS KEDUA
+    // ==============================
 
     lcd.setCursor(0, 1);
-    lcd.print("BB:");
-    lcd.print(berat, 1);
-    lcd.print(" kg");
-}
 
+    lcd.print("BB:");
+
+    lcd.print(berat, 1);
+
+    lcd.print("kg   ");
+}
 
 void showMessage(String baris1, String baris2)
 {

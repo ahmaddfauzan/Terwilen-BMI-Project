@@ -4,7 +4,16 @@
 #include <Arduino.h>
 
 void initLCD();
-void showMeasurement(float tinggi, float berat);
-void showMessage(String baris1, String baris2);
+
+void showMeasurement(
+    float tinggi,
+    float berat,
+    bool isHold
+);
+
+void showMessage(
+    String baris1,
+    String baris2
+);
 
 #endif
