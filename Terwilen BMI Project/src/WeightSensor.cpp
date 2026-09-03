@@ -6,8 +6,8 @@
 
 HX711 scale;
 
-const float ZERO_RAW = 41026.0;
-const float SCALE_FACTOR = 20327.36;
+// Hasil kalibrasi berdasarkan beban 58 kg
+const float SCALE_FACTOR = -20261.0;
 
 long readAverageRaw(uint8_t samples)
 {
