@@ -22,9 +22,41 @@
 
 bool isHold = false;
 
-float tinggiHold = 0;
-float beratHold = 0;
-float tareWeight = 0;
+float tinggiHold = 0.0;
+float beratHold = 0.0;
+float imtHold = 0.0;
+
+
+// =====================================================
+// TARE
+// =====================================================
+
+// Berat yang dijadikan titik nol sementara.
+//
+// Contoh:
+//
+// Ibu = 55 kg
+// TARE
+// tareWeight = 55 kg
+//
+// Anak + ibu = 67 kg
+// berat bersih = 67 - 55 = 12 kg
+//
+float tareWeight = 0.0;
+
+
+// =====================================================
+// STATUS INDIKATOR TARE
+// =====================================================
+
+// TRUE hanya selama indikator T ditampilkan
+bool isTare = false;
+
+// Waktu ketika TARE ditekan
+unsigned long tareStartTime = 0;
+
+// Durasi indikator TARE
+const unsigned long TARE_DISPLAY_TIME = 1000;
 
 
 // =====================================================
@@ -44,10 +76,30 @@ void setup()
 {
     Serial.begin(115200);
 
-    pinMode(BUTTON_HOLD, INPUT_PULLUP);
-    pinMode(BUTTON_RESET, INPUT_PULLUP);
-    pinMode(BUTTON_TARE, INPUT_PULLUP);
 
+    // =================================================
+    // BUTTON
+    // =================================================
+
+    pinMode(
+        BUTTON_HOLD,
+        INPUT_PULLUP
+    );
+
+    pinMode(
+        BUTTON_RESET,
+        INPUT_PULLUP
+    );
+
+    pinMode(
+        BUTTON_TARE,
+        INPUT_PULLUP
+    );
+
+
+    // =================================================
+    // INIT SYSTEM
+    // =================================================
 
     initLCD();
 
@@ -59,7 +111,12 @@ void setup()
 
     initApiServer();
 
-    Serial.println("SISTEM SIAP");
+
+    Serial.println();
+    Serial.println("======================");
+    Serial.println("    SISTEM SIAP");
+    Serial.println("======================");
+    Serial.println();
 }
 
 
@@ -73,13 +130,15 @@ void loop()
     // BACA SENSOR
     // =================================================
 
-    float tinggiSensor = readHeightCM();
+    float tinggiSensor =
+        readHeightCM();
 
-    float beratSensor = readWeight();
+    float beratSensor =
+        readWeight();
 
 
     // =================================================
-    // BACA STATUS BUTTON
+    // BACA BUTTON
     // =================================================
 
     bool holdButton =
@@ -93,70 +152,201 @@ void loop()
 
 
     // =================================================
-    // BUTTON HOLD
-    // Deteksi HIGH -> LOW
-    // =================================================
-
-    if (lastHoldButton == HIGH &&
-        holdButton == LOW)
-    {
-        if (!isHold)
-        {
-            tinggiHold = tinggiSensor;
-
-            beratHold =
-                beratSensor - tareWeight;
-
-            if (beratHold < 0)
-            {
-                beratHold = 0;
-            }
-
-            isHold = true;
-
-            Serial.println(">>> HOLD AKTIF <<<");
-        }
-    }
-
-
-    // =================================================
     // BUTTON TARE
+    // HIGH -> LOW
     // =================================================
 
     if (lastTareButton == HIGH &&
         tareButton == LOW)
     {
-        tareWeight = beratSensor;
+        // =============================================
+        // SIMPAN BERAT SEBAGAI TITIK NOL
+        // =============================================
 
-        Serial.print(">>> TARE: ");
+        tareWeight =
+            beratSensor;
+
+
+        // =============================================
+        // AKTIFKAN INDIKATOR TARE
+        // =============================================
+
+        isTare = true;
+
+        tareStartTime = millis();
+
+
+        // =============================================
+        // SERIAL
+        // =============================================
+
+        Serial.println();
+        Serial.println(">>> TARE <<<");
+
+        Serial.print("Tare Weight : ");
+        Serial.print(
+            tareWeight,
+            2
+        );
+
+        Serial.println(" kg");
+    }
+
+
+    // =================================================
+    // MATIKAN INDIKATOR TARE
+    // SETELAH 1 DETIK
+    // =================================================
+
+    if (isTare)
+    {
+        if (
+            millis() - tareStartTime
+            >= TARE_DISPLAY_TIME
+        )
+        {
+            isTare = false;
+        }
+    }
+
+
+    // =================================================
+    // HITUNG BERAT BERSIH
+    // =================================================
+
+    float beratBersih =
+        beratSensor - tareWeight;
+
+
+    // Jangan tampilkan berat negatif
+    if (beratBersih < 0)
+    {
+        beratBersih = 0;
+    }
+
+
+    // =================================================
+    // BUTTON HOLD
+    // HIGH -> LOW
+    // =================================================
+
+    if (lastHoldButton == HIGH &&
+        holdButton == LOW)
+    {
+        // HOLD hanya boleh mengambil nilai
+        // ketika belum HOLD
+
+        if (!isHold)
+        {
+            // =========================================
+            // SIMPAN TINGGI
+            // =========================================
+
+            tinggiHold =
+                tinggiSensor;
+
+
+            // =========================================
+            // SIMPAN BERAT BERSIH
+            // =========================================
+
+            beratHold =
+                beratBersih;
+
+
+            // =========================================
+            // HITUNG IMT
+            // =========================================
+
+            if (tinggiHold > 0)
+            {
+                float tinggiMeter =
+                    tinggiHold / 100.0;
+
+                imtHold =
+                    beratHold /
+                    (
+                        tinggiMeter *
+                        tinggiMeter
+                    );
+            }
+            else
+            {
+                imtHold = 0;
+            }
+
+
+            // =========================================
+            // AKTIFKAN HOLD
+            // =========================================
+
+            isHold = true;
+
+
+            Serial.println();
+            Serial.println(">>> HOLD AKTIF <<<");
+
+            Serial.print("TB : ");
+            Serial.print(
+                tinggiHold,
+                1
+            );
+
+            Serial.println(" cm");
+
+            Serial.print("BB : ");
+            Serial.print(
+                beratHold,
+                2
+            );
+
+            Serial.println(" kg");
+
+            Serial.print("IMT: ");
+            Serial.println(
+                imtHold,
+                2
+            );
+        }
+    }
+
+
+    // =================================================
+    // BUTTON RESET
+    // HIGH -> LOW
+    // =================================================
+
+    if (lastResetButton == HIGH &&
+        resetButton == LOW)
+    {
+        // =============================================
+        // RESET HANYA UNTUK HOLD
+        // =============================================
+
+        isHold = false;
+
+        tinggiHold = 0.0;
+        beratHold = 0.0;
+        imtHold = 0.0;
+
+
+        // =============================================
+        // JANGAN RESET tareWeight !!!
+        // =============================================
+
+        Serial.println();
+        Serial.println(">>> RESET HOLD <<<");
+
+        Serial.print(
+            "Tare tetap: "
+        );
 
         Serial.print(
             tareWeight,
             2
         );
 
-        Serial.println(" kg <<<");
-    }
-
-
-    // =================================================
-    // BUTTON RESET
-    // =================================================
-
-    if (lastResetButton == HIGH &&
-        resetButton == LOW)
-    {
-        // Lepaskan HOLD
-        isHold = false;
-
-        tinggiHold = 0;
-        beratHold = 0;
-        tareWeight = 0;
-
-
-        Serial.println(
-            ">>> RESET <<<"
-        );
+        Serial.println(" kg");
     }
 
 
@@ -175,53 +365,75 @@ void loop()
 
 
     // =================================================
-    // HITUNG BERAT BERSIH
-    // =================================================
-
-    float beratBersih =
-        beratSensor - tareWeight;
-
-
-    if (beratBersih < 0)
-    {
-        beratBersih = 0;
-    }
-
-
-    // =================================================
     // DATA DISPLAY
     // =================================================
 
     float tinggiDisplay;
     float beratDisplay;
+    float imtDisplay;
 
 
     if (isHold)
     {
+        // =============================================
+        // HOLD
+        // =============================================
+
         tinggiDisplay =
             tinggiHold;
 
         beratDisplay =
             beratHold;
+
+        imtDisplay =
+            imtHold;
     }
     else
     {
+        // =============================================
+        // LIVE
+        // =============================================
+
         tinggiDisplay =
             tinggiSensor;
 
         beratDisplay =
             beratBersih;
+
+
+        // =============================================
+        // HITUNG IMT
+        // =============================================
+
+        if (tinggiDisplay > 0)
+        {
+            float tinggiMeter =
+                tinggiDisplay / 100.0;
+
+            imtDisplay =
+                beratDisplay /
+                (
+                    tinggiMeter *
+                    tinggiMeter
+                );
+        }
+        else
+        {
+            imtDisplay = 0;
+        }
     }
 
 
     // =================================================
-    // TAMPILKAN KE LCD
+    // LCD
     // =================================================
 
     showMeasurement(
         tinggiDisplay,
         beratDisplay,
-        isHold
+        imtDisplay,
+        isHold,
+        isTare
     );
 
 
@@ -230,26 +442,60 @@ void loop()
     // =================================================
 
     Serial.print("TB : ");
-    Serial.print(tinggiDisplay, 1);
+    Serial.print(
+        tinggiDisplay,
+        1
+    );
+
     Serial.println(" cm");
 
+
     Serial.print("BB : ");
-    Serial.print(beratDisplay, 2);
+    Serial.print(
+        beratDisplay,
+        2
+    );
+
     Serial.println(" kg");
 
 
-    Serial.print("HOLD : ");
+    Serial.print("IMT: ");
+    Serial.println(
+        imtDisplay,
+        2
+    );
+
+
+    Serial.print("TARE: ");
+    Serial.print(
+        tareWeight,
+        2
+    );
+
+    Serial.println(" kg");
+
+
+    Serial.print("HOLD: ");
 
     if (isHold)
         Serial.println("ON");
     else
         Serial.println("OFF");
 
+
+    Serial.print("T INDICATOR: ");
+
+    if (isTare)
+        Serial.println("ON");
+    else
+        Serial.println("OFF");
+
+
     Serial.println("-------------------");
 
 
     // =================================================
-    // UPDATE API
+    // API
     // =================================================
 
     updateApiServer(

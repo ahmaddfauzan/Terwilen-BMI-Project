@@ -8,7 +8,9 @@ void initLCD();
 void showMeasurement(
     float tinggi,
     float berat,
-    bool isHold
+    float imt,
+    bool isHold,
+    bool isTare
 );
 
 void showMessage(
